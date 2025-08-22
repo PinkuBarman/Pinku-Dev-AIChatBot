@@ -226,7 +226,7 @@
 <body>
     <div class="chatbot-container">
         <div class="chat-header">
-            🤖 Small AI ChatBot
+            🤖 Simple AI ChatBot
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -251,7 +251,10 @@
         
         <div class="chat-input-container">
             <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." />
-            <button class="send-button" id="sendButton">📤</button>
+			<button class="send-button" id="sendButton" style="font-size: 18px; color: white; background-color: #007BFF; border: none; padding: 5px 5px; border-radius: 1px;">
+  ⬆️
+</button>
+
         </div>
 		<div class="center-div" style="font-size: 12px;">
 		<pre>
@@ -314,7 +317,7 @@
                         ⏰ ${currentTime}
                     </div>
                     <div>
-                        I'm your AI assistant. How can I help you today?
+                        I'm your simple AI assistant. How can I help you today?
                     </div>
                 `;
             }
@@ -371,6 +374,14 @@
                             'I\'m functioning perfectly! How about you?',
                             'All systems running smoothly here!'
                         ]
+					},
+					whoCreatedYou: {
+                        patterns: ['who created you', 'who built you', 'who is your creator'],
+                        responses: [
+                            'I was created by Pinku Barman to be your clever, curious companion, thank you for asking!',
+                            'I was built and designed by Pinku Barman to be your clever, curious companion! 😊',
+                            'Pinku Barman gave me life - no lightning bolts, just brilliant engineering and a lot of coffee-fueled code! 😊'
+                        ]
                     },
                     help: {
                         patterns: ['help', 'what can you do', 'commands'],
@@ -397,7 +408,7 @@
                         ]
                     },
                     programming: {
-                        patterns: ['code', 'programming', 'javascript', 'python', 'html', 'css', 'coding', 'developer', 'software'],
+                        patterns: ['code', 'programming', 'javascript', 'python', 'html', 'css', 'coding', 'developer', 'software','sql'],
                         responses: [
                             'Programming is fascinating! I can help with basic coding questions.',
                             'There are so many programming languages to explore!',
@@ -474,6 +485,7 @@
                             { url: 'https://www.theverge.com/', text: 'The Verge - Technology news and reviews' }
                         ]
                     },
+					
                     compliments: {
                         patterns: ['you are smart', 'you are cool', 'good job', 'well done', 'thank you'],
                         responses: [
@@ -490,6 +502,22 @@
                             'It\'s ' + new Date().toLocaleTimeString() + ' right now.'
                         ]
                     },
+					financialInclusion: {
+                        patterns: ['financial inclusion', 'inclusion'],
+                        responses: [
+                            'Financial inclusion ensures access to affordable financial services, empowering individuals and businesses to build wealth, resilience, and economic opportunity.',
+							'Financial inclusion reduces poverty, boosts entrepreneurship, and promotes equality by offering savings, credit, insurance, and digital payment access to all.'
+                        ],
+						links: [
+                            { url: 'https://www.worldbank.org/en/topic/financialinclusion/overview', text: '🔗 World Bank\’s Financial Inclusion Overview' },
+                            { url: 'https://finclusion.org/fii-blog/benefits-of-financial-inclusion.html', text: '🔗 12 Benefits of Financial Inclusion – Finclusion.org' }
+
+                        ]
+                    },
+					
+					
+
+
                     default: [
                         'That\'s interesting! Tell me more.',
                         'I see what you mean. Can you elaborate?',
@@ -709,6 +737,11 @@
                         'What\'s for lunch? 🍕',
                         'Favorite book? 📚',
                         'Like to exercise? 🏃‍♀️'
+                    ],
+					financialInclusion: [
+                        'Can mobile banking reach the last mile?📱',
+                        'What does it mean to be truly financially included? ❓',
+                        'Is financial literacy the missing link? 🧠'
                     ]
                 };
 
@@ -726,6 +759,8 @@
                     return this.shuffleArray(promptSets.compliment).slice(0, 3);
                 } else if (lowerMessage.includes('?')) {
                     return this.shuffleArray(promptSets.question).slice(0, 3);
+				} else if (lowerMessage.includes('financialInclusion') || lowerMessage.includes('inclusion')) {
+                    return this.shuffleArray(promptSets.financialInclusion).slice(0, 3);
                 } else {
                     return this.shuffleArray(promptSets.general).slice(0, 4);
                 }
