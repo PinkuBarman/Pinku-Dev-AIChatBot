@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chatbot-container {
+            width: 400px;
+            height: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin: 10px 0;
+            padding: 12px 16px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+
+        .user-message {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .bot-message {
+            background: #e9ecef;
+            color: #333;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 12px 16px;
+            background: #e9ecef;
+            border-radius: 20px;
+            margin: 10px 0;
+            max-width: 80%;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #007bff;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .send-button:hover {
+            transform: scale(1.1);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .prompt-bubbles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+            padding: 0 5px;
+        }
+
+        .prompt-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .prompt-bubble:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .prompt-bubble:active {
+            transform: translateY(0);
+        }
+
+        .bot-link {
+            color: #007bff;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .bot-link:hover {
+            color: #0056b3;
+            text-decoration: none;
+        }
+
+        .link-container {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 12px;
+            border-left: 3px solid #007bff;
+        }
+
+        .link-container small {
+            color: #666;
+            font-size: 11px;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chat-header">
+            🤖 AI Assistant
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message" id="welcomeMessage">
+                <!-- Welcome message will be populated with date/time -->
+            </div>
+            <div class="prompt-bubbles" id="promptBubbles">
+                <button class="prompt-bubble">Tell me a joke 😄</button>
+                <button class="prompt-bubble">What's the time? ⏰</button>
+                <button class="prompt-bubble">How are you? 👋</button>
+                <button class="prompt-bubble">What can you do? 🤔</button>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." />
+            <button class="send-button" id="sendButton">📤</button>
+        </div>
+    </div>
+
+    <script>
+        class SimpleChatbot {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.chatInput = document.getElementById('chatInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.typingIndicator = document.getElementById('typingIndicator');
+                this.promptBubbles = document.getElementById('promptBubbles');
+                
+                this.initializeWelcomeMessage();
+                this.initializeEventListeners();
+                this.initializeResponses();
+                this.initializePromptBubbles();
+            }
+
+            initializeWelcomeMessage() {
+                const now = new Date();
+                const dateOptions = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                const timeOptions = { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                };
+                
+                const currentDate = now.toLocaleDateString('en-US', dateOptions);
+                const currentTime = now.toLocaleTimeString('en-US', timeOptions);
+                
+                // Get greeting based on time of day
+                const hour = now.getHours();
+                let greeting;
+                if (hour < 12) {
+                    greeting = "Good morning! ☀️";
+                } else if (hour < 17) {
+                    greeting = "Good afternoon! 🌤️";
+                } else {
+                    greeting = "Good evening! 🌙";
+                }
+                
+                const welcomeMessage = document.getElementById('welcomeMessage');
+                welcomeMessage.innerHTML = `
+                    <div style="margin-bottom: 8px;">
+                        <strong>${greeting}</strong>
+                    </div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-bottom: 10px;">
+                        📅 ${currentDate}<br>
+                        ⏰ ${currentTime}
+                    </div>
+                    <div>
+                        I'm your AI assistant. How can I help you today?
+                    </div>
+                `;
+            }
+
+            initializeEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+            }
+
+            initializePromptBubbles() {
+                this.promptBubbles.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('prompt-bubble')) {
+                        const promptText = e.target.textContent.replace(/[😄⏰👋🤔❓💡🌟🎵🌤️🎮📚🍕🏃‍♀️🎨]/g, '').trim();
+                        this.chatInput.value = promptText;
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            initializeResponses() {
+                this.responses = {
+                    greetings: {
+                        patterns: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening'],
+                        responses: [
+                            'Hello! How can I help you today?',
+                            'Hi there! What can I do for you?',
+                            'Hey! Nice to meet you!',
+                            'Greetings! How may I assist you?'
+                        ]
+                    },
+                    farewell: {
+                        patterns: ['bye', 'goodbye', 'see you', 'farewell', 'take care'],
+                        responses: [
+                            'Goodbye! Have a great day!',
+                            'See you later!',
+                            'Take care! Come back anytime.',
+                            'Farewell! It was nice talking to you.'
+                        ]
+                    },
+                    name: {
+                        patterns: ['what is your name', 'who are you', 'your name'],
+                        responses: [
+                            'I\'m a simple AI chatbot created to help you!',
+                            'You can call me AI Assistant.',
+                            'I\'m your friendly neighborhood chatbot!'
+                        ]
+                    },
+                    howAreYou: {
+                        patterns: ['how are you', 'how do you feel', 'how are you doing'],
+                        responses: [
+                            'I\'m doing great, thank you for asking!',
+                            'I\'m functioning perfectly! How about you?',
+                            'All systems running smoothly here!'
+                        ]
+                    },
+                    help: {
+                        patterns: ['help', 'what can you do', 'commands'],
+                        responses: [
+                            'I can chat with you, answer simple questions, and have conversations! Try asking me about the weather, telling me a joke, or just chat casually.',
+                            'I\'m here to chat and assist you. Ask me anything!'
+                        ]
+                    },
+                    weather: {
+                        patterns: ['weather', 'how is the weather', 'is it sunny', 'is it raining'],
+                        responses: [
+                            'I don\'t have access to real weather data, but I hope it\'s nice where you are!',
+                            'I wish I could check the weather for you, but I\'m just a simple chatbot.',
+                            'Perfect weather for chatting, don\'t you think? 😊'
+                        ]
+                    },
+                    jokes: {
+                        patterns: ['joke', 'funny', 'make me laugh', 'tell me a joke'],
+                        responses: [
+                            'Why don\'t scientists trust atoms? Because they make up everything!',
+                            'Why did the chatbot go to therapy? It had too many deep learning issues!',
+                            'What do you call a chatbot that sings? A-Dell! 🎵',
+                            'Why don\'t robots ever panic? They have great self-control!'
+                        ]
+                    },
+                    programming: {
+                        patterns: ['code', 'programming', 'javascript', 'python', 'html', 'css', 'coding', 'developer', 'software'],
+                        responses: [
+                            'Programming is fascinating! I can help with basic coding questions.',
+                            'There are so many programming languages to explore!',
+                            'Coding is like solving puzzles - very rewarding!'
+                        ],
+                        links: [
+                            { url: 'https://developer.mozilla.org/en-US/', text: 'MDN Web Docs - Comprehensive web development resource' },
+                            { url: 'https://www.w3schools.com/', text: 'W3Schools - Learn web technologies' },
+                            { url: 'https://stackoverflow.com/', text: 'Stack Overflow - Developer community' }
+                        ]
+                    },
+                    learning: {
+                        patterns: ['learn', 'study', 'education', 'course', 'tutorial', 'how to learn'],
+                        responses: [
+                            'Learning is a lifelong journey! What would you like to explore?',
+                            'There are so many great resources available for learning today.',
+                            'I love helping people discover new knowledge!'
+                        ],
+                        links: [
+                            { url: 'https://www.coursera.org/', text: 'Coursera - Online courses from top universities' },
+                            { url: 'https://www.khanacademy.org/', text: 'Khan Academy - Free learning for everyone' },
+                            { url: 'https://www.edx.org/', text: 'edX - University-level courses online' }
+                        ]
+                    },
+                    health: {
+                        patterns: ['health', 'fitness', 'exercise', 'diet', 'wellness', 'medical'],
+                        responses: [
+                            'Health and wellness are so important! Always consult professionals for medical advice.',
+                            'Taking care of yourself is the best investment you can make.',
+                            'Remember, I can\'t provide medical advice, but I can share general wellness info!'
+                        ],
+                        links: [
+                            { url: 'https://www.mayoclinic.org/', text: 'Mayo Clinic - Trusted health information' },
+                            { url: 'https://www.webmd.com/', text: 'WebMD - Health information and tools' },
+                            { url: 'https://www.cdc.gov/', text: 'CDC - Health guidelines and information' }
+                        ]
+                    },
+                    news: {
+                        patterns: ['news', 'current events', 'what\'s happening', 'latest news', 'world news'],
+                        responses: [
+                            'I don\'t have access to real-time news, but here are some reliable sources!',
+                            'Staying informed is important - check out these trusted news sources.',
+                            'For the latest news, I\'d recommend these reputable sources.'
+                        ],
+                        links: [
+                            { url: 'https://www.bbc.com/news', text: 'BBC News - Global news coverage' },
+                            { url: 'https://www.reuters.com/', text: 'Reuters - International news service' },
+                            { url: 'https://www.npr.org/', text: 'NPR - National Public Radio news' }
+                        ]
+                    },
+                    science: {
+                        patterns: ['science', 'physics', 'chemistry', 'biology', 'research', 'scientific'],
+                        responses: [
+                            'Science is amazing! There\'s always something new to discover.',
+                            'I love discussing scientific topics! What interests you most?',
+                            'The scientific method has given us so much understanding of our world.'
+                        ],
+                        links: [
+                            { url: 'https://www.nature.com/', text: 'Nature - Leading scientific journal' },
+                            { url: 'https://www.scientificamerican.com/', text: 'Scientific American - Science news and articles' },
+                            { url: 'https://www.nasa.gov/', text: 'NASA - Space and earth science' }
+                        ]
+                    },
+                    technology: {
+                        patterns: ['technology', 'tech', 'ai', 'artificial intelligence', 'computer', 'digital'],
+                        responses: [
+                            'Technology is evolving so rapidly! It\'s exciting to be part of this era.',
+                            'AI and tech are reshaping our world in incredible ways.',
+                            'What aspects of technology interest you most?'
+                        ],
+                        links: [
+                            { url: 'https://www.techcrunch.com/', text: 'TechCrunch - Latest technology news' },
+                            { url: 'https://www.wired.com/', text: 'WIRED - Technology, science, culture' },
+                            { url: 'https://www.theverge.com/', text: 'The Verge - Technology news and reviews' }
+                        ]
+                    },
+                    compliments: {
+                        patterns: ['you are smart', 'you are cool', 'good job', 'well done', 'thank you'],
+                        responses: [
+                            'Thank you so much! That means a lot to me.',
+                            'You\'re very kind! I appreciate it.',
+                            'Thanks! You\'re pretty awesome yourself!',
+                            'I\'m glad I could help! 😊'
+                        ]
+                    },
+                    time: {
+                        patterns: ['what time', 'current time', 'time is it'],
+                        responses: [
+                            'The current time is ' + new Date().toLocaleTimeString() + '.',
+                            'It\'s ' + new Date().toLocaleTimeString() + ' right now.'
+                        ]
+                    },
+                    default: [
+                        'That\'s interesting! Tell me more.',
+                        'I see what you mean. Can you elaborate?',
+                        'Hmm, I\'m not sure about that. Could you rephrase?',
+                        'That\'s a good point! What else would you like to know?',
+                        'I\'m still learning. Can you help me understand better?',
+                        'Interesting perspective! What made you think of that?'
+                    ]
+                };
+            }
+
+            sendMessage() {
+                const message = this.chatInput.value.trim();
+                if (!message) return;
+
+                this.addMessage(message, 'user-message');
+                this.chatInput.value = '';
+                this.sendButton.disabled = true;
+
+                this.hidePromptBubbles();
+                this.showTypingIndicator();
+                
+                setTimeout(() => {
+                    this.hideTypingIndicator();
+                    const response = this.generateResponse(message);
+                    this.addMessage(response, 'bot-message');
+                    this.showNewPromptBubbles(message);
+                    this.sendButton.disabled = false;
+                    this.chatInput.focus();
+                }, 1000 + Math.random() * 1000);
+            }
+
+            addMessage(text, className) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${className}`;
+                
+                if (className === 'bot-message' && typeof text === 'object') {
+                    messageDiv.innerHTML = text.message;
+                    if (text.links && text.links.length > 0) {
+                        const linkContainer = document.createElement('div');
+                        linkContainer.className = 'link-container';
+                        
+                        const linksHtml = text.links.map(link => 
+                            `<div style="margin: 4px 0;">
+                                🔗 <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="bot-link">${link.text}</a>
+                            </div>`
+                        ).join('');
+                        
+                        linkContainer.innerHTML = `
+                            <small>📚 Helpful resources:</small>
+                            ${linksHtml}
+                        `;
+                        messageDiv.appendChild(linkContainer);
+                    }
+                } else {
+                    messageDiv.textContent = text;
+                }
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            showTypingIndicator() {
+                this.typingIndicator.style.display = 'block';
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            hideTypingIndicator() {
+                this.typingIndicator.style.display = 'none';
+            }
+
+            generateResponse(message) {
+                const lowerMessage = message.toLowerCase();
+                
+                for (const [category, data] of Object.entries(this.responses)) {
+                    if (category === 'default') continue;
+                    
+                    for (const pattern of data.patterns) {
+                        if (lowerMessage.includes(pattern)) {
+                            const response = this.getRandomResponse(data.responses);
+                            
+                            if (data.links) {
+                                return {
+                                    message: response,
+                                    links: this.getRandomLinks(data.links, 2)
+                                };
+                            }
+                            
+                            return response;
+                        }
+                    }
+                }
+                
+                if (this.isPositive(lowerMessage)) {
+                    return 'I\'m glad you\'re feeling positive! 😊 What else is on your mind?';
+                }
+                
+                if (this.isNegative(lowerMessage)) {
+                    return 'I\'m sorry to hear that. Is there anything I can help you with?';
+                }
+                
+                if (lowerMessage.includes('?')) {
+                    return 'That\'s a great question! I wish I had a better answer for you. What do you think?';
+                }
+                
+                return this.getRandomResponse(this.responses.default);
+            }
+
+            getRandomResponse(responses) {
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+
+            getRandomLinks(links, maxLinks = 3) {
+                const shuffled = this.shuffleArray(links);
+                return shuffled.slice(0, Math.min(maxLinks, shuffled.length));
+            }
+
+            isPositive(message) {
+                const positiveWords = ['happy', 'good', 'great', 'awesome', 'wonderful', 'excellent', 'love', 'like', 'amazing', 'fantastic'];
+                return positiveWords.some(word => message.includes(word));
+            }
+
+            isNegative(message) {
+                const negativeWords = ['sad', 'bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'disappointed', 'upset'];
+                return negativeWords.some(word => message.includes(word));
+            }
+
+            hidePromptBubbles() {
+                const existingBubbles = this.chatMessages.querySelector('.prompt-bubbles');
+                if (existingBubbles) {
+                    existingBubbles.style.display = 'none';
+                }
+            }
+
+            showNewPromptBubbles(lastMessage) {
+                const existingBubbles = this.chatMessages.querySelector('.prompt-bubbles');
+                if (existingBubbles) {
+                    existingBubbles.remove();
+                }
+
+                const bubblesContainer = document.createElement('div');
+                bubblesContainer.className = 'prompt-bubbles';
+
+                const prompts = this.generateContextualPrompts(lastMessage);
+                
+                prompts.forEach(prompt => {
+                    const bubble = document.createElement('button');
+                    bubble.className = 'prompt-bubble';
+                    bubble.textContent = prompt;
+                    bubblesContainer.appendChild(bubble);
+                });
+
+                this.chatMessages.appendChild(bubblesContainer);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+
+                bubblesContainer.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('prompt-bubble')) {
+                        const promptText = e.target.textContent.replace(/[😄⏰👋🤔❓💡🌟🎵🌤️🎮📚🍕🏃‍♀️🎨]/g, '').trim();
+                        this.chatInput.value = promptText;
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            generateContextualPrompts(lastMessage) {
+                const lowerMessage = lastMessage.toLowerCase();
+                
+                const promptSets = {
+                    greeting: [
+                        'What can you do? 🤔',
+                        'Tell me a joke 😄',
+                        'How are you feeling? 💡',
+                        'What\'s new? 🌟'
+                    ],
+                    joke: [
+                        'Tell me another joke 😄',
+                        'That was funny! 🎵',
+                        'Do you know any riddles? ❓',
+                        'What about puns? 🌟'
+                    ],
+                    time: [
+                        'What\'s the date today? 📅',
+                        'Do you like mornings? 🌤️',
+                        'Tell me about time zones ⏰',
+                        'What\'s your favorite time? 💡'
+                    ],
+                    weather: [
+                        'Do you like sunny days? ☀️',
+                        'Tell me about seasons 🍂',
+                        'What\'s your favorite weather? 🌤️',
+                        'Do you dream of rain? 🌧️'
+                    ],
+                    help: [
+                        'Tell me a fun fact 💡',
+                        'What are your hobbies? 🎨',
+                        'Do you play games? 🎮',
+                        'What do you think about? 🤔'
+                    ],
+                    compliment: [
+                        'Thank you too! 🌟',
+                        'Tell me about yourself 👋',
+                        'What makes you happy? 😄',
+                        'Share a memory 💭'
+                    ],
+                    question: [
+                        'Ask me anything else ❓',
+                        'I have questions too 🤔',
+                        'What do you wonder about? 💡',
+                        'Tell me your thoughts 💭'
+                    ],
+                    general: [
+                        'What\'s your favorite hobby? 🎨',
+                        'Do you like music? 🎵',
+                        'Tell me about your day 🌟',
+                        'What makes you smile? 😄',
+                        'Do you have pets? 🐕',
+                        'What\'s for lunch? 🍕',
+                        'Favorite book? 📚',
+                        'Like to exercise? 🏃‍♀️'
+                    ]
+                };
+
+                if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                    return this.shuffleArray(promptSets.greeting).slice(0, 3);
+                } else if (lowerMessage.includes('joke') || lowerMessage.includes('funny')) {
+                    return this.shuffleArray(promptSets.joke).slice(0, 3);
+                } else if (lowerMessage.includes('time') || lowerMessage.includes('clock')) {
+                    return this.shuffleArray(promptSets.time).slice(0, 3);
+                } else if (lowerMessage.includes('weather') || lowerMessage.includes('sunny') || lowerMessage.includes('rain')) {
+                    return this.shuffleArray(promptSets.weather).slice(0, 3);
+                } else if (lowerMessage.includes('help') || lowerMessage.includes('do')) {
+                    return this.shuffleArray(promptSets.help).slice(0, 3);
+                } else if (lowerMessage.includes('thank') || lowerMessage.includes('good') || lowerMessage.includes('great')) {
+                    return this.shuffleArray(promptSets.compliment).slice(0, 3);
+                } else if (lowerMessage.includes('?')) {
+                    return this.shuffleArray(promptSets.question).slice(0, 3);
+                } else {
+                    return this.shuffleArray(promptSets.general).slice(0, 4);
+                }
+            }
+
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new SimpleChatbot();
+        });
+    </script>
+</body>
+</html>
